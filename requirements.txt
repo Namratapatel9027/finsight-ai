@@ -1,0 +1,15 @@
+langchain
+langchain-community
+langchain-groq
+langchain-huggingface
+langchain-text-splitters
+chromadb
+sentence-transformers
+rank-bm25
+python-dotenv
+pandas
+fastapi
+uvicorn
+httpx
+requests
+streamlit
