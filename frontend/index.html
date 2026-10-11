@@ -6,8 +6,8 @@
   <title>FinSolve Knowledge Assistant</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=16" />
 </head>
 <body>
   <!-- Ambient background glow elements -->
@@ -17,32 +17,52 @@
 
   <!-- ================= AUTH VIEW ================= -->
   <div id="authView" class="view-screen active">
-    <div class="auth-card glass-panel">
-      <div class="auth-header">
-        <div class="brand-badge">🔐 FinSolve Portal</div>
-        <h2>Enterprise Access</h2>
-        <p>Sign in with your company credentials to access internal RAG documents.</p>
-      </div>
-
-      <div id="authAlert" class="alert-box hidden"></div>
-
-      <form id="loginForm" autocomplete="off">
-        <div class="input-group">
-          <label for="emailInput">Company Email</label>
-          <input type="email" id="emailInput" placeholder="your.name@fintechco.com" required />
+    <div class="landing-shell">
+      <section class="landing-story">
+        <a class="landing-brand" href="#" aria-label="FinSolve home">
+          <span class="brand-mark"><i></i><i></i><i></i><i></i></span>
+          <span>finsolve<span class="brand-light"> / intelligence</span></span>
+        </a>
+        <div class="story-copy">
+          <div class="eyebrow"><span class="live-dot"></span> PRIVATE KNOWLEDGE, MADE CLEAR</div>
+          <h1>Your company’s<br><span>knowledge,</span><br>within reach.</h1>
+          <p>Ask better questions. Find trusted answers. Keep your work moving.</p>
         </div>
-        <div class="input-group">
-          <label for="passwordInput">Password</label>
-          <input type="password" id="passwordInput" placeholder="••••••••••••" required />
+        <div class="orbit-scene" aria-hidden="true">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="orbit-core"><span class="core-glyph">✳</span></div>
+          <span class="orbit-node node-a">⌕</span><span class="orbit-node node-b">▤</span><span class="orbit-node node-c">✧</span>
+          <div class="orbit-caption"><span>FINsolve AI</span><span>Connected knowledge <b>●</b></span></div>
         </div>
-        <button type="submit" id="loginBtn" class="btn btn-primary btn-glow">
-          <span>Sign In</span>
-          <div class="btn-shine"></div>
-        </button>
-      </form>
-      <div class="auth-footer">
-        <small>🔒 Secured with FinSolve RBAC authentication</small>
+        <div class="landing-foot"><span>BUILT FOR TEAMS THAT THINK AHEAD</span><span>01 — 03</span></div>
       </div>
+      <section class="auth-side">
+        <div class="auth-topline"><span>FINTECHCO WORKSPACE</span><span class="secure-label">⌑ &nbsp;SECURE ACCESS</span></div>
+        <div class="auth-card">
+          <div class="auth-header">
+            <div class="auth-icon">↗</div>
+            <div class="eyebrow">GOOD TO HAVE YOU HERE</div>
+            <h2>Sign in to continue</h2>
+            <p>Use your FintechCo account to open your knowledge workspace.</p>
+          </div>
+          <div id="authAlert" class="alert-box hidden"></div>
+          <form id="loginForm" autocomplete="off">
+            <div class="input-group">
+              <label for="emailInput">WORK EMAIL</label>
+              <div class="field-wrap"><span class="field-icon">✉</span><input type="email" id="emailInput" placeholder="name@fintechco.com" required /></div>
+            </div>
+            <div class="input-group">
+              <label for="passwordInput">PASSWORD</label>
+              <div class="field-wrap"><span class="field-icon">⌑</span><input type="password" id="passwordInput" placeholder="Enter your password" required /></div>
+            </div>
+            <button type="submit" id="loginBtn" class="btn btn-primary btn-glow">
+              <span>Enter workspace</span><span class="login-arrow">↗</span><div class="btn-shine"></div>
+            </button>
+          </form>
+          <div class="auth-footer"><span class="footer-lock">⌑</span><span>Your workspace is protected with role-based access.</span></div>
+        </div>
+        <div class="auth-bottomline"><span>© 2026 FINSOLVE</span><span>KNOWLEDGE ASSISTANT</span></div>
+      </section>
     </div>
   </div>
 
@@ -50,10 +70,15 @@
   <div id="appView" class="view-screen hidden">
     <!-- Top Glass Navigation Bar -->
     <header class="app-header glass-panel">
+      <a class="workspace-brand" href="#workspaceTop" aria-label="FinSolve home"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>finsolve<span> / workspace</span></span></a>
+      <nav class="workspace-nav" aria-label="Workspace navigation">
+        <button id="tabChat" class="workspace-nav-link active">✦ &nbsp;Chat</button>
+        <button id="navAnalytics" class="workspace-nav-link">▥ &nbsp;Analytics</button>
+        <button id="tabNotes" class="workspace-nav-link">▤ &nbsp;Notes</button>
+      </nav>
       <div class="header-profile">
         <div class="avatar-ring">👤</div>
-        <div>
-          <h3>Welcome, <span id="userName">Employee</span>!</h3>
+        <div class="header-copy">
           <div class="meta-tags">
             <span>🏢 Dept: <b id="userDept">General</b></span>
             <span class="sep">|</span>
@@ -68,7 +93,7 @@
       </button>
     </header>
 
-    <div class="app-body">
+    <div id="workspaceTop" class="app-body">
       <!-- Sidebar Panel -->
       <aside class="sidebar glass-panel">
         <button id="newChatBtn" class="btn btn-primary btn-glow full-width">
@@ -88,49 +113,20 @@
           <div id="notesHistoryList" class="scrollable-list"></div>
         </div>
 
-        <div class="sidebar-section analytics-section">
-          <h4>📊 Session & Security Analytics</h4>
-          <div class="metric-row">
-            <span class="metric-label">🛡️ Permitted Scope:</span>
-            <code id="rbacScopeText" class="badge-code">General Handbook</code>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">⏱️ Last Query Time:</span>
-            <code id="lastLatencyText" class="badge-code">N/A</code>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">🔒 Blocked Requests:</span>
-            <code id="blockedCountText" class="badge-code">0</code>
-          </div>
-
-          <div class="metric-stacked">
-            <span class="metric-label">🎯 Detected Intent(s):</span>
-            <ul id="intentsList" class="analytics-sublist">
-              <li><em>None detected yet</em></li>
-            </ul>
-          </div>
-
-          <div class="metric-stacked">
-            <span class="metric-label">📁 Sources Used (All):</span>
-            <ul id="sourcesList" class="analytics-sublist">
-              <li><em>No sources queried yet</em></li>
-            </ul>
-          </div>
-        </div>
       </aside>
 
       <!-- Main Content Stage -->
       <main class="main-stage">
-        <!-- View Selector Tabs -->
-        <div class="tab-switcher glass-panel">
-          <button id="tabChat" class="tab-btn active">💬 Knowledge Chatbot</button>
-          <button id="tabNotes" class="tab-btn">📝 Scratchpad & Notes</button>
-        </div>
+        <section id="workspaceHero" class="workspace-hero">
+          <div class="hero-copy"><div class="hero-personal-greeting"><h2>Welcome, <span id="heroUserName">Employee</span>!</h2><p>How can I help you today?</p></div><span class="hero-kicker"><i class="live-dot"></i> YOUR TEAM KNOWLEDGE HUB</span><h1>Good work starts<br><span>with a good question.</span></h1><p class="hero-description">Get clear, trusted answers from your company’s knowledge—then save what matters.</p><button id="heroNewChatBtn" class="hero-cta">Start a new conversation <span>↗</span></button></div>
+          <div class="hero-art" aria-hidden="true"><div class="hero-ring ring-a"></div><div class="hero-ring ring-b"></div><div class="hero-star">✳</div><div class="hero-float float-doc">▤ <span>Company docs</span></div><div class="hero-float float-answer">✧ <span>Answers, with context</span></div></div>
+        </section>
 
         <!-- TAB 1: Chatbot View -->
         <section id="chatSection" class="content-panel glass-panel">
           <div class="chat-header">
-            <h4>🗨️ Active Topic: <em id="activeTopicLabel">New Topic</em></h4>
+            <div><div class="eyebrow">KNOWLEDGE ASSISTANT <span class="live-dot"></span></div><h4><em id="activeTopicLabel">New Topic</em></h4></div>
+            <div class="secure-label chat-secure">⌑ &nbsp;YOUR WORKSPACE</div>
           </div>
 
           <!-- Department Recommendation Chips -->
@@ -187,8 +183,20 @@
         </section>
       </main>
     </div>
+
+    <section id="analyticsSection" class="analytics-dashboard">
+      <div class="section-heading"><div><span class="hero-kicker">WORKSPACE OVERVIEW</span><h2>Session analytics</h2><p>Stay informed about access, activity and the knowledge behind your answers.</p></div><span class="overview-pill"><i class="live-dot"></i> Session active</span></div>
+      <div class="analytics-cards">
+        <article class="analytics-card scope-card"><span class="analytics-icon">⌑</span><span class="analytics-caption">PERMITTED SCOPE</span><code id="rbacScopeText" class="badge-code">General Handbook</code><small>Available to your role</small></article>
+        <article class="analytics-card"><span class="analytics-icon">◷</span><span class="analytics-caption">LAST QUERY TIME</span><code id="lastLatencyText" class="badge-code">N/A</code><small>Response time</small></article>
+        <article class="analytics-card"><span class="analytics-icon">⛨</span><span class="analytics-caption">BLOCKED REQUESTS</span><code id="blockedCountText" class="badge-code">0</code><small>Access policy events</small></article>
+        <article class="analytics-card analytics-list-card"><span class="analytics-icon">✧</span><span class="analytics-caption">DETECTED INTENTS</span><ul id="intentsList" class="analytics-sublist"><li><em>None detected yet</em></li></ul></article>
+        <article class="analytics-card analytics-list-card sources-card"><span class="analytics-icon">▤</span><span class="analytics-caption">SOURCES USED</span><ul id="sourcesList" class="analytics-sublist"><li><em>No sources queried yet</em></li></ul></article>
+      </div>
+      <footer class="workspace-footer"><span>FinSolve Knowledge Assistant</span><span>Private knowledge for better decisions.</span></footer>
+    </section>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

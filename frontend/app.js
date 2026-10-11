@@ -85,13 +85,21 @@ const state = {
 // DOM Nodes
 const authView = document.getElementById("authView");
 const appView = document.getElementById("appView");
+const landingShell = document.querySelector(".landing-shell");
+if (landingShell && window.matchMedia("(pointer: fine)").matches) {
+  landingShell.addEventListener("pointermove", (event) => {
+    const bounds = landingShell.getBoundingClientRect();
+    landingShell.style.setProperty("--pointer-x", `${event.clientX - bounds.left}px`);
+    landingShell.style.setProperty("--pointer-y", `${event.clientY - bounds.top}px`);
+  });
+}
 const loginForm = document.getElementById("loginForm");
 const authAlert = document.getElementById("authAlert");
 
-const userName = document.getElementById("userName");
 const userDept = document.getElementById("userDept");
 const userRole = document.getElementById("userRole");
 const userEmail = document.getElementById("userEmail");
+const heroUserName = document.getElementById("heroUserName");
 const signOutBtn = document.getElementById("signOutBtn");
 
 const chatHistoryList = document.getElementById("chatHistoryList");
@@ -107,8 +115,11 @@ const sourcesList = document.getElementById("sourcesList");
 
 const tabChat = document.getElementById("tabChat");
 const tabNotes = document.getElementById("tabNotes");
+const navAnalytics = document.getElementById("navAnalytics");
 const chatSection = document.getElementById("chatSection");
 const notesSection = document.getElementById("notesSection");
+const workspaceHero = document.getElementById("workspaceHero");
+const analyticsSection = document.getElementById("analyticsSection");
 
 const activeTopicLabel = document.getElementById("activeTopicLabel");
 const recChipsList = document.getElementById("recChipsList");
@@ -203,7 +214,7 @@ loginForm.addEventListener("submit", async (e) => {
     showAlert("❌ Cannot reach the API. Start the app with: uvicorn api:app --app-dir app --reload", "error");
   } finally {
     loginButton.disabled = false;
-    loginButtonText.textContent = "Sign In";
+    loginButtonText.textContent = "Enter workspace";
   }
 });
 
@@ -237,7 +248,10 @@ function initAppSession() {
   authView.classList.add("hidden");
   appView.classList.remove("hidden");
 
-  userName.textContent = state.user.name || "Employee";
+  const employeeName = state.user.name?.trim() || state.user.full_name?.trim() ||
+    state.user.email?.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\p{L}/gu, (letter) => letter.toUpperCase()) ||
+    "Employee";
+  heroUserName.textContent = employeeName;
   userDept.textContent = state.user.department || "General";
   userRole.textContent = state.user.role || "Member";
   userEmail.textContent = state.user.email || "";
@@ -292,7 +306,7 @@ function persistActiveNote() {
   const existing = state.notes[state.activeNoteId];
   const title = noteTitleInput.value.trim();
   const content = noteTextArea.value;
-  if (!existing && !title && !content.trim()) return;
+  if (!existing && (!title || title === "Untitled Note") && !content.trim()) return;
 
   const savedNote = existing || {
     title: "Untitled Note",
@@ -318,13 +332,14 @@ newChatBtn.addEventListener("click", () => {
   chatMessages.innerHTML = "";
   document.getElementById("recommendationContainer").classList.remove("hidden");
   loadActiveNote(createSessionId());
+  saveCurrentChat();
   switchView("chat");
   renderChips();
 });
 
 function renderHistory() {
   chatHistoryList.innerHTML = "";
-  Object.entries(state.chatSessions).forEach(([sid, sdata]) => {
+  Object.entries(state.chatSessions).reverse().forEach(([sid, sdata]) => {
     const item = document.createElement("div");
     item.className = `history-item ${sid === state.sessionId ? "active" : ""}`;
     const title = document.createElement("span");
@@ -348,6 +363,7 @@ function renderHistory() {
       activeTopicLabel.textContent = selectedChat.title;
       renderChatMessages();
       switchView("chat");
+      chatSection.scrollIntoView({ behavior: "smooth", block: "start" });
       renderHistory();
     };
     renameButton.onclick = (e) => {
@@ -561,6 +577,7 @@ chatForm.addEventListener("submit", async (e) => {
   appendBubble("user", q);
   chatInput.value = "";
   document.getElementById("recommendationContainer").classList.add("hidden");
+  saveCurrentChat();
 
   const loader = appendBubble("assistant loading", "Searching company documents...");
   const startTime = performance.now();
@@ -593,7 +610,26 @@ chatForm.addEventListener("submit", async (e) => {
       blockedCountText.textContent = state.analytics.blockedCount;
       const err = await res.json();
       loader.remove();
-      appendBubble("assistant", `🔒 Access Denied: ${err.detail}`);
+      const errorMessage = `🔒 Access Denied: ${err.detail}`;
+      appendBubble("assistant", errorMessage);
+      state.messages.push({ role: "assistant", content: errorMessage });
+      saveCurrentChat();
+      return;
+    }
+
+    if (!res.ok) {
+      let detail = `The server returned an error (${res.status}).`;
+      try {
+        const errorData = await res.json();
+        if (errorData.detail) detail = errorData.detail;
+      } catch {
+        // Keep the status message when the server response is not JSON.
+      }
+      loader.remove();
+      const errorMessage = `The API could not answer this request: ${detail}`;
+      appendBubble("assistant", errorMessage);
+      state.messages.push({ role: "assistant", content: errorMessage });
+      saveCurrentChat();
       return;
     }
 
@@ -612,9 +648,13 @@ chatForm.addEventListener("submit", async (e) => {
     }
 
     saveCurrentChat();
-  } catch {
+  } catch (error) {
     loader.remove();
-    appendBubble("assistant", "Cannot reach FastAPI backend. Make sure the server is running on port 8000.");
+    const errorMessage = `Cannot reach the API at ${API_URL}. Check http://127.0.0.1:8000/health, then start the server with: python -m uvicorn api:app --app-dir app --reload --port 8000`;
+    console.error("Chat request failed:", error);
+    appendBubble("assistant", errorMessage);
+    state.messages.push({ role: "assistant", content: errorMessage });
+    saveCurrentChat();
   }
 });
 
@@ -717,6 +757,7 @@ function renderNotesHistory() {
         renderHistory();
       }
       switchView("notes");
+      notesSection.scrollIntoView({ behavior: "smooth", block: "start" });
       renderNotesHistory();
     };
     notesHistoryList.appendChild(item);
@@ -742,18 +783,57 @@ function switchView(target) {
   if (target === "chat") {
     tabChat.classList.add("active");
     tabNotes.classList.remove("active");
+    navAnalytics.classList.remove("active");
+    workspaceHero.classList.remove("hidden");
     chatSection.classList.remove("hidden");
     notesSection.classList.add("hidden");
   } else {
     tabNotes.classList.add("active");
     tabChat.classList.remove("active");
+    navAnalytics.classList.remove("active");
+    workspaceHero.classList.add("hidden");
     notesSection.classList.remove("hidden");
     chatSection.classList.add("hidden");
   }
 }
 
-tabChat.addEventListener("click", () => switchView("chat"));
-tabNotes.addEventListener("click", () => switchView("notes"));
+tabChat.addEventListener("click", () => {
+  switchView("chat");
+  chatSection.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+tabNotes.addEventListener("click", () => {
+  switchView("notes");
+  notesSection.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+navAnalytics.addEventListener("click", () => {
+  tabChat.classList.remove("active");
+  tabNotes.classList.remove("active");
+  navAnalytics.classList.add("active");
+  analyticsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+document.getElementById("heroNewChatBtn").addEventListener("click", () => {
+  newChatBtn.click();
+  chatSection.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+if ("IntersectionObserver" in window) {
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      if (entry.target === analyticsSection) {
+        navAnalytics.classList.add("active");
+        tabChat.classList.remove("active");
+        tabNotes.classList.remove("active");
+      } else if (entry.target === chatSection && state.currentView === "chat") {
+        navAnalytics.classList.remove("active");
+        tabChat.classList.add("active");
+      }
+    });
+  }, { threshold: 0.22 });
+  sectionObserver.observe(analyticsSection);
+  sectionObserver.observe(chatSection);
+  sectionObserver.observe(notesSection);
+}
 
 // Initialize from existing local token
 if (state.token && state.user) {

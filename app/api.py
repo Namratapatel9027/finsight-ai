@@ -1,13 +1,16 @@
 """FastAPI service for authenticated, session-isolated RAG requests."""
 
 import json
+import math
 import os
+import re
 import secrets
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import UUID, uuid4
 
 import pandas as pd
+from groq import RateLimitError
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
@@ -19,6 +22,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
+
+# The CSV uses "Technology" for the knowledge base's "engineering" folder.
+# Departments without a corresponding data folder are not allowed to sign in.
+CSV_DEPARTMENT_ROLES = {
+    "engineering": "engineering",
+    "technology": "engineering",
+    "finance": "finance",
+    "hr": "hr",
+    "marketing": "marketing",
+    "general": "employee",
+}
+DEMO_PASSWORD = "pass@123"
 
 app = FastAPI(title="FinSolve RAG API", version="1.0.0")
 app.add_middleware(
@@ -135,6 +150,49 @@ def run_rag_question(question, role, history_messages):
     )
 
 
+def format_rate_limit_retry(error: RateLimitError) -> tuple[str, int | None]:
+    """Return a safe, human-readable retry delay from Groq's 429 response."""
+    response = getattr(error, "response", None)
+    headers = response.headers if response is not None else {}
+    retry_seconds = None
+
+    retry_ms = headers.get("retry-after-ms")
+    retry_after = headers.get("retry-after")
+    for value, multiplier in ((retry_ms, 0.001), (retry_after, 1)):
+        try:
+            retry_seconds = max(1, math.ceil(float(value) * multiplier))
+            break
+        except (TypeError, ValueError):
+            continue
+
+    if retry_seconds is None:
+        retry_text = headers.get("x-ratelimit-reset-tokens", "")
+        if not retry_text:
+            message = str(error)
+            match = re.search(r"try again in\s+((?:\d+(?:\.\d+)?[hms])+)", message, re.IGNORECASE)
+            retry_text = match.group(1) if match else ""
+
+        parts = re.findall(r"(\d+(?:\.\d+)?)([hms])", retry_text, re.IGNORECASE)
+        if parts:
+            factors = {"h": 3600, "m": 60, "s": 1}
+            retry_seconds = max(
+                1,
+                math.ceil(sum(float(value) * factors[unit.lower()] for value, unit in parts)),
+            )
+
+    if retry_seconds is None:
+        return "a short while", None
+
+    minutes, seconds = divmod(retry_seconds, 60)
+    if minutes:
+        retry_label = f"{minutes} minute{'s' if minutes != 1 else ''}"
+        if seconds:
+            retry_label += f" {seconds} second{'s' if seconds != 1 else ''}"
+    else:
+        retry_label = f"{seconds} second{'s' if seconds != 1 else ''}"
+    return retry_label, retry_seconds
+
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
@@ -142,7 +200,7 @@ def health_check():
 
 @app.post("/auth/login", response_model=LoginResponse)
 def login(request: LoginRequest):
-    """Verify company credentials against hr_data.csv securely."""
+    """Verify demo credentials and department access against hr_data.csv."""
     clean_email = request.email.strip().lower()
     clean_password = request.password.strip()
 
@@ -169,7 +227,15 @@ def login(request: LoginRequest):
             detail=f"Unable to access employee directory: {e}",
         )
 
-    # 1. Match Email
+    required_columns = {"email", "department"}
+    if not required_columns.issubset(hr_df.columns):
+        raise HTTPException(
+            status_code=500,
+            detail="Employee directory must contain email and department columns.",
+        )
+
+    # Match email case-insensitively, then only allow CSV departments represented
+    # by one of the five department folders under data/.
     matched = hr_df[hr_df["email"].astype(str).str.strip().str.lower() == clean_email]
     if matched.empty:
         raise HTTPException(
@@ -177,43 +243,31 @@ def login(request: LoginRequest):
             detail="Access Denied: Email address is not registered in company records.",
         )
 
-    # Some demo CSV rows can share an email. Select the row whose department
-    # password matches instead of silently binding every duplicate to row 1.
-    def password_matches(department):
-        department = str(department).strip()
-        accepted = {
-            f"{department.capitalize()}@123",
-            f"{department.title()}@123",
-            f"{department.lower()}@123",
-        }
-        return clean_password in accepted
-
-    matching_password = matched[matched["department"].apply(password_matches)]
-    if matching_password.empty:
+    if not secrets.compare_digest(clean_password, DEMO_PASSWORD):
         raise HTTPException(
             status_code=401,
-            detail="Incorrect password. Please verify your credentials and try again.",
+            detail="Incorrect password. For this demo, use the shared password pass@123.",
         )
 
-    emp_row = matching_password.iloc[0]
+    matched = matched.copy()
+    matched["_access_role"] = matched["department"].map(
+        lambda value: CSV_DEPARTMENT_ROLES.get(str(value).strip().casefold())
+    )
+    eligible = matched[matched["_access_role"].notna()]
+    if eligible.empty:
+        raise HTTPException(
+            status_code=403,
+            detail="Access is available only to Engineering/Technology, Finance, HR, Marketing, and General departments.",
+        )
+
+    # Some demo CSV emails repeat across departments. The login form has one
+    # email field, so bind a duplicate email to its first supported CSV row.
+    emp_row = eligible.iloc[0]
     dept_raw = str(emp_row.get("department", "General")).strip()
     role_raw = str(emp_row.get("role", dept_raw)).strip()
     name_raw = str(emp_row.get("full_name", emp_row.get("name", "Employee"))).strip()
     user_id = str(emp_row.get("employee_id", clean_email.split("@")[0])).strip()
-
-    # Map department to RBAC role
-    # Engineering/Technology -> engineering, Finance -> finance, Marketing -> marketing, HR -> hr, others -> general
-    dept_lower = dept_raw.lower()
-    if "tech" in dept_lower or "engineer" in dept_lower:
-        normalized_role = "engineering"
-    elif "finan" in dept_lower:
-        normalized_role = "finance"
-    elif "market" in dept_lower:
-        normalized_role = "marketing"
-    elif "hr" in dept_lower:
-        normalized_role = "hr"
-    else:
-        normalized_role = normalize_role(dept_raw)
+    normalized_role = emp_row["_access_role"]
 
     token = f"finsolve-{uuid4().hex}"
     authenticated_user = AuthenticatedUser(
@@ -244,11 +298,17 @@ def chat(
         raise HTTPException(status_code=422, detail="Question cannot be blank.")
 
     with _sessions.use_session(user.user_id, str(request.session_id)) as history:
-        result = run_rag_question(
-            question,
-            role=user.role,
-            history_messages=history,
-        )
+        try:
+            result = run_rag_question(
+                question,
+                role=user.role,
+                history_messages=history,
+            )
+        except RateLimitError as error:
+            retry_label, retry_seconds = format_rate_limit_retry(error)
+            detail = f"AI request limit exceeded. Please try again in {retry_label}."
+            headers = {"Retry-After": str(retry_seconds)} if retry_seconds else None
+            raise HTTPException(status_code=429, detail=detail, headers=headers) from error
 
     if result.get("access_denied"):
         raise HTTPException(status_code=403, detail=result["answer"])
