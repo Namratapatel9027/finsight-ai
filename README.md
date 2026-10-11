@@ -52,7 +52,7 @@ FinSight AI addresses these challenges through a modular RAG pipeline with dense
 | Conversation management | Session-based context handling |
 | Quality assurance | Retrieval evaluation and automated tests |
 
-## ✅ Features in Simple Words
+## ✅ Features
 
 1. **Company employees can sign in:** the email must use `@fintechco.com` and be listed in the employee CSV.
 2. **Department is checked from the CSV:** the app reads the employee's email and department from `data/hr/hr_data.csv`. It allows General, Finance, HR, Marketing, and Engineering/Technology departments.
