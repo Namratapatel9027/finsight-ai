@@ -1,7 +1,6 @@
 /rag_chatbot_env
 /.env
 /chroma_db/
-/data/hr/hr_data.csv
 __pycache__/
 *.py[cod]
 .pytest_cache/
