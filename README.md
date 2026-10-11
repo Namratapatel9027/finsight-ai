@@ -71,24 +71,21 @@ FinSight AI addresses these challenges through a modular RAG pipeline with dense
 
 The screenshots below show the sign-in page, home screen, chat, and analytics. Employee email addresses have been replaced with example addresses.
 
-<table>
-  <tr>
-    <td><img src="assets/screenshots/login.png" alt="FinSolve employee sign-in page" width="100%"></td>
-    <td><img src="assets/screenshots/home.png" alt="FinSolve workspace home page" width="100%"></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>Employee sign-in</strong></td>
-    <td align="center"><strong>Workspace home</strong></td>
-  </tr>
-  <tr>
-    <td><img src="assets/screenshots/chat.png" alt="FinSolve chat page with department-specific suggested questions" width="100%"></td>
-    <td><img src="assets/screenshots/analytics.png" alt="FinSolve session analytics page" width="100%"></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>Knowledge chat</strong></td>
-    <td align="center"><strong>Session analytics</strong></td>
-  </tr>
-</table>
+### Employee Sign-in
+
+<img src="assets/screenshots/login.png" alt="FinSolve employee sign-in page" width="100%">
+
+### Workspace Home
+
+<img src="assets/screenshots/home.png" alt="FinSolve workspace home page" width="100%">
+
+### Knowledge Chat
+
+<img src="assets/screenshots/chat.png" alt="FinSolve chat page with department-specific suggested questions" width="100%">
+
+### Session Analytics
+
+<img src="assets/screenshots/analytics.png" alt="FinSolve session analytics page" width="100%">
 
 ## 🏗️ System Architecture
 
