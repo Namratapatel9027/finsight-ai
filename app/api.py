@@ -10,13 +10,26 @@ from uuid import UUID, uuid4
 import pandas as pd
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from access_control import normalize_role
 from conversation_store import ConversationStore
+from fastapi.middleware.cors import CORSMiddleware
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = PROJECT_ROOT / "frontend"
 
 app = FastAPI(title="FinSolve RAG API", version="1.0.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 _sessions = ConversationStore()
 _bearer = HTTPBearer(auto_error=False)
 
@@ -140,8 +153,7 @@ def login(request: LoginRequest):
             detail="Please use your official company email address (@fintechco.com).",
         )
 
-    project_root = Path(__file__).resolve().parent.parent
-    hr_csv_path = project_root / "data" / "hr" / "hr_data.csv"
+    hr_csv_path = PROJECT_ROOT / "data" / "hr" / "hr_data.csv"
 
     if not hr_csv_path.exists():
         raise HTTPException(
@@ -165,21 +177,29 @@ def login(request: LoginRequest):
             detail="Access Denied: Email address is not registered in company records.",
         )
 
-    emp_row = matched.iloc[0]
-    dept_raw = str(emp_row.get("department", "General")).strip()
-    role_raw = str(emp_row.get("role", dept_raw)).strip()
-    name_raw = str(emp_row.get("full_name", emp_row.get("name", "Employee"))).strip()
-    user_id = str(emp_row.get("employee_id", clean_email.split("@")[0])).strip()
+    # Some demo CSV rows can share an email. Select the row whose department
+    # password matches instead of silently binding every duplicate to row 1.
+    def password_matches(department):
+        department = str(department).strip()
+        accepted = {
+            f"{department.capitalize()}@123",
+            f"{department.title()}@123",
+            f"{department.lower()}@123",
+        }
+        return clean_password in accepted
 
-    # 2. Match Password Securely (Backend Check only)
-    # Allows proper department credential: e.g. "Finance@123" or "Sales@123"
-    valid_passwords = {f"{dept_raw.capitalize()}@123", f"{dept_raw.title()}@123", f"{dept_raw.lower()}@123"}
-
-    if clean_password not in valid_passwords:
+    matching_password = matched[matched["department"].apply(password_matches)]
+    if matching_password.empty:
         raise HTTPException(
             status_code=401,
             detail="Incorrect password. Please verify your credentials and try again.",
         )
+
+    emp_row = matching_password.iloc[0]
+    dept_raw = str(emp_row.get("department", "General")).strip()
+    role_raw = str(emp_row.get("role", dept_raw)).strip()
+    name_raw = str(emp_row.get("full_name", emp_row.get("name", "Employee"))).strip()
+    user_id = str(emp_row.get("employee_id", clean_email.split("@")[0])).strip()
 
     # Map department to RBAC role
     # Engineering/Technology -> engineering, Finance -> finance, Marketing -> marketing, HR -> hr, others -> general
@@ -245,3 +265,8 @@ def chat(
         intent=result["intent"],
         sources=sources,
     )
+
+
+# Serve the plain HTML application and its assets from the same origin as the
+# API. This avoids frontend/API port and CORS configuration errors in local use.
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

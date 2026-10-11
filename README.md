@@ -8,7 +8,7 @@ A retrieval-augmented generation system that enables department-specific knowled
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)
-![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
+![Frontend](https://img.shields.io/badge/Frontend-HTML%2FCSS%2FJavaScript-E34F26)
 ![LangChain](https://img.shields.io/badge/Framework-LangChain-1C3C3C?logo=langchain&logoColor=white)
 ![ChromaDB](https://img.shields.io/badge/Vector%20Database-ChromaDB-8A2BE2)
 ![Groq](https://img.shields.io/badge/LLM-Groq-F55036)
@@ -41,7 +41,7 @@ FinSight AI addresses these challenges through a modular RAG pipeline with dense
 
 | Capability | Implementation |
 |---|---|
-| Conversational question answering | Streamlit chat interface |
+| Conversational question answering | Browser-based frontend |
 | Semantic retrieval | ChromaDB with BGE embeddings |
 | Exact-term retrieval | BM25 keyword search |
 | Ranking improvement | Reciprocal Rank Fusion (RRF) |
@@ -54,7 +54,7 @@ FinSight AI addresses these challenges through a modular RAG pipeline with dense
 
 ## 🖥️ Application Preview
 
-Add a screenshot of the running Streamlit application here. Save the screenshot in your repository as `assets/finsight-ai-demo.png`.
+Add a screenshot of the running frontend here. Save the screenshot in your repository as `assets/finsight-ai-demo.png`.
 
 Replace this placeholder with the following Markdown once the screenshot exists:
 
@@ -134,7 +134,7 @@ Query Understanding and Rewriting
 Context Preparation and Answer Generation
         │
         ▼
-Response Through the Streamlit Interface
+Response Through the Browser Frontend
 ```
 
 ## ⚙️ Technology Stack
@@ -142,7 +142,7 @@ Response Through the Streamlit Interface
 | Component | Technology | Purpose |
 |---|---|---|
 | Programming language | Python | Application and processing logic |
-| Frontend | Streamlit | Interactive chat experience |
+| Frontend | HTML, CSS, JavaScript | Interactive chat experience |
 | Backend | FastAPI, Uvicorn | API endpoints and request handling |
 | LLM integration | LangChain, ChatGroq | Model interaction and generation |
 | Language model | Groq-hosted model | Query processing and response generation |
@@ -251,6 +251,10 @@ FinSight-AI/
 │   ├── rag.py
 │   ├── retriever.py
 │   └── streamlit_app.py
+├── frontend/
+│   ├── app.js
+│   ├── index.html
+│   └── style.css
 ├── data/
 │   ├── engineering/
 │   ├── finance/
@@ -335,32 +339,20 @@ python app/ingestion.py
 
 This builds the local ChromaDB index from the supported source documents. Run ingestion again when indexed documents change.
 
-### 6. Start the Backend
+### 6. Start the Website and API
 
-Open the first terminal:
+From the repository root, run:
 
 ```bash
 python -m uvicorn api:app --app-dir app --reload --port 8000
 ```
 
-Available endpoints:
+Open the website at <http://127.0.0.1:8000>. FastAPI serves the HTML/CSS/JavaScript frontend and its API on the same origin. The API documentation and health check are available at:
 
-- API documentation: http://127.0.0.1:8000/docs
-- Health check: http://127.0.0.1:8000/health
+- API docs: <http://127.0.0.1:8000/docs>
+- Health: <http://127.0.0.1:8000/health>
 
-### 7. Start the Frontend
-
-Open a second terminal, activate the virtual environment, and run:
-
-```bash
-python -m streamlit run app/streamlit_app.py --server.port 8501
-```
-
-Open the application at:
-
-http://localhost:8501
-
-### 8. Run Automated Tests
+### 7. Run Automated Tests
 
 From the repository root:
 
