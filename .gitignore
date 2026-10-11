@@ -8,3 +8,7 @@ __pycache__/
 /Problem Statement.docx
 /Evaluation Criteria.docx
 /FinSolve_Enterprise_RAG_Interview_Master_Guide.docx
+/.codex/
+/.claude/
+/.aws/
+/.agents/
