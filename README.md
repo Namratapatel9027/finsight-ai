@@ -1,117 +1,395 @@
+ <div align="center">
+
 # FinSight AI
 
-A role-aware retrieval-augmented generation (RAG) assistant for exploring FinSolve Technologies' internal reference documents. The project combines a Streamlit chat interface, a FastAPI service, hybrid search, conversational context, and role-based document filtering.
+### Role-Aware Conversational RAG Assistant for Enterprise Knowledge
 
-> **Data and security:** `data/hr/hr_data.csv` contains employee-like personal fields, including names, work email addresses, dates of birth, and salaries. Confirm that the file is synthetic or explicitly approved for publication before sharing or deploying this repository. The authentication flow is a demo implementation and is not suitable for production use with real credentials or employee records.
+A retrieval-augmented generation system that enables department-specific knowledge discovery through hybrid search, conversational query understanding, access control, and structured data processing.
 
-## Features
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
+![LangChain](https://img.shields.io/badge/Framework-LangChain-1C3C3C?logo=langchain&logoColor=white)
+![ChromaDB](https://img.shields.io/badge/Vector%20Database-ChromaDB-8A2BE2)
+![Groq](https://img.shields.io/badge/LLM-Groq-F55036)
 
-- Streamlit chat UI backed by a FastAPI service
-- Dense vector search in Chroma and BM25 keyword search, combined with Reciprocal Rank Fusion
-- LLM-based query understanding, conversational follow-ups, and grounded answers with source names
-- Department-aware access filtering for finance, marketing, engineering, general, and HR content
-- Structured HR question handling and an evaluation notebook
+[Overview](#-overview) · [Architecture](#-system-architecture) · [Technical Approach](#-technical-approach) · [Evaluation](#-evaluation-results) · [Setup](#-getting-started)
 
-## Architecture
+</div>
 
-The high-level system architecture is shown below. The other diagrams cover retrieval, authorization, ingestion, and query routing.
+---
+
+## 📌 Overview
+
+Enterprise knowledge is often distributed across financial reports, employee handbooks, engineering documentation, marketing reports, and structured datasets. Finding the right information requires more than a basic chatbot or a single vector search.
+
+**FinSight AI** combines hybrid retrieval, conversational context, role-based document permissions, and deterministic data processing to answer questions using an organization's internal knowledge sources.
+
+### The Problem
+
+- **Retrieval inaccuracies:** Semantic search can miss exact reporting periods, identifiers, and numerical terms.
+- **Access restrictions:** Different departments require different levels of document access.
+- **Numerical reliability:** LLM-generated calculations over raw tabular data can produce incorrect results.
+- **Conversational context:** Follow-up questions may be incomplete without the previous conversation.
+- **Evaluation:** Retrieval quality and answer reliability need measurable tests rather than subjective assessment.
+
+### The Solution
+
+FinSight AI addresses these challenges through a modular RAG pipeline with dense and keyword retrieval, Reciprocal Rank Fusion, query rewriting, department-aware filtering, and Pandas-based processing for supported structured-data questions.
+
+## ✨ Key Capabilities
+
+| Capability | Implementation |
+|---|---|
+| Conversational question answering | Streamlit chat interface |
+| Semantic retrieval | ChromaDB with BGE embeddings |
+| Exact-term retrieval | BM25 keyword search |
+| Ranking improvement | Reciprocal Rank Fusion (RRF) |
+| Follow-up questions | Conversational query rewriting |
+| Department permissions | Role-based access control (RBAC) |
+| Structured HR queries | Deterministic Pandas operations |
+| API integration | FastAPI backend |
+| Conversation management | Session-based context handling |
+| Quality assurance | Retrieval evaluation and automated tests |
+
+## 🖥️ Application Preview
+
+Add a screenshot of the running Streamlit application here. Save the screenshot in your repository as `assets/finsight-ai-demo.png`.
+
+Replace this placeholder with the following Markdown once the screenshot exists:
+
+`![FinSight AI application showing a user question, grounded response, and retrieved sources](assets/finsight-ai-demo.png)`
+
+The screenshot should show the actual interface and a representative question-answer interaction.
+
+## 🏗️ System Architecture
+
+### 1. High-Level Architecture
+
+The system separates the frontend, API, authorization, retrieval, query processing, and response generation into distinct components.
 
 ![FinSight AI high-level system architecture](diagrams/Diagram%201%3A%20High-Level%20System%20Architecture%20Diagram.png)
 
 <details>
-<summary>View the other architecture diagrams</summary>
+<summary><strong>View detailed architecture diagrams</strong></summary>
 
-### RAG pipeline and retrieval
+### 2. Query Understanding and Routing
 
-![RAG pipeline and retrieval flow](diagrams/Diagram%202%3A%20RAG%20Pipeline%20%26%20Retrieval%20Flowchart.png)
+Shows how incoming questions are interpreted and directed to document retrieval or supported structured-data processing.
 
-### Role-based access control and authentication
+![Query understanding and routing flowchart](diagrams/Diagram%205%3A%20Dual-Route%20Query%20Understanding%20%26%20Routing%20Decision%20Flowchart.png)
 
-![RBAC and authentication sequence](diagrams/Diagram%203%3A%20RBAC%20%26%20Authentication%20Sequence%20Diagram.png)
+### 3. Hybrid Retrieval Pipeline
 
-### Data ingestion and indexing
+Illustrates the dense and lexical retrieval paths and the combination of their rankings.
 
-![Data ingestion and indexing pipeline](diagrams/Diagram%204%3A%20Data%20Ingestion%20%26%20Indexing%20Pipeline.png)
+![RAG pipeline and retrieval flowchart](diagrams/Diagram%202%3A%20RAG%20Pipeline%20%26%20Retrieval%20Flowchart.png)
 
-### Query understanding and routing
+### 4. Authentication and Authorization
 
-![Dual-route query understanding and routing](diagrams/Diagram%205%3A%20Dual-Route%20Query%20Understanding%20%26%20Routing%20Decision%20Flowchart.png)
+Documents the authentication and role-based access-control sequence.
+
+![RBAC and authentication sequence diagram](diagrams/Diagram%203%3A%20RBAC%20%26%20Authentication%20Sequence%20Diagram.png)
+
+### 5. Document Ingestion and Indexing
+
+Shows the document-processing and indexing pipeline used to prepare knowledge sources for retrieval.
+
+![Document ingestion and indexing pipeline](diagrams/Diagram%204%3A%20Data%20Ingestion%20%26%20Indexing%20Pipeline.png)
 
 </details>
 
-## Repository layout
+## 🔄 How It Works
 
 ```text
-app/          FastAPI API, Streamlit UI, retrieval, generation, ingestion, and access control
-data/         Knowledge documents and HR CSV used by the demo
-diagrams/     Architecture and flow diagrams
-evaluation/   RAG evaluation notebook
- tests/       API and frontend-client tests
+Knowledge Documents
+        │
+        ▼
+Document Loading and Chunking
+        │
+        ▼
+Metadata Extraction and Embeddings
+        │
+        ▼
+Local ChromaDB Index
+        │
+        ▼
+User Question
+        │
+        ▼
+Authentication and Permission Checks
+        │
+        ▼
+Query Understanding and Rewriting
+        │
+        ├── Document-Based Questions
+        │      ├── Dense Semantic Search
+        │      ├── BM25 Keyword Search
+        │      └── Reciprocal Rank Fusion
+        │
+        └── Supported Structured Questions
+               └── Pandas-Based Computation
+        │
+        ▼
+Context Preparation and Answer Generation
+        │
+        ▼
+Response Through the Streamlit Interface
 ```
 
-## Requirements
+## ⚙️ Technology Stack
+
+| Component | Technology | Purpose |
+|---|---|---|
+| Programming language | Python | Application and processing logic |
+| Frontend | Streamlit | Interactive chat experience |
+| Backend | FastAPI, Uvicorn | API endpoints and request handling |
+| LLM integration | LangChain, ChatGroq | Model interaction and generation |
+| Language model | Groq-hosted model | Query processing and response generation |
+| Embedding model | `BAAI/bge-small-en-v1.5` | Semantic text embeddings |
+| Vector database | ChromaDB | Persistent vector storage and similarity search |
+| Keyword retrieval | `rank-bm25` | Lexical matching |
+| Ranking | Reciprocal Rank Fusion | Combining retrieval rankings |
+| Structured processing | Pandas | Deterministic tabular calculations |
+| Testing | Python `unittest` | Automated application tests |
+
+## 🧠 Key Engineering Decisions
+
+### Hybrid Search Instead of Vector Search Alone
+
+Dense embeddings help retrieve conceptually related content, while BM25 helps match exact terms such as reporting periods and identifiers. RRF combines the rankings without requiring direct comparison of scores from different retrieval methods.
+
+### Deterministic Processing for Structured Data
+
+Supported numerical HR queries are routed to Pandas operations instead of asking the LLM to calculate results from raw CSV text. This makes supported calculations reproducible and easier to test.
+
+### Department-Aware Retrieval
+
+The access-control component determines the document scope permitted for each configured role. Authorization must be enforced server-side rather than relying on frontend controls alone.
+
+### Conversational Query Rewriting
+
+Follow-up questions can be rewritten into standalone queries using prior conversational context, helping the retriever identify the intended subject and reporting period.
+
+### Session-Based Conversation Management
+
+Conversation state is managed by session so that follow-up context can be associated with the appropriate user conversation. Isolation and authorization behavior should be verified through dedicated tests.
+
+## 🔐 Department Access Model
+
+The intended access model is summarized below. Actual permissions are determined by the application's configured authorization rules.
+
+| Role | Intended document scope |
+|---|---|
+| Employee | General company information |
+| Finance | General and finance documents |
+| Marketing | General and marketing documents |
+| HR | General and HR documents |
+| Engineering | General and engineering documents |
+| Executive | Cross-department information, subject to configured permissions |
+
+Structured HR calculations should only be available to explicitly authorized roles.
+
+**Security limitation:** This project uses demonstration authentication and authorization logic. It is not a production security solution for confidential enterprise records. Production deployment requires hardened identity management, secure credential storage, audit logging, and comprehensive authorization testing.
+
+## 📊 Evaluation Results
+
+The following results are from the project's recorded evaluation runs. They are specific to the evaluated dataset and test configuration.
+
+### Retrieval Quality
+
+| Metric | Recorded result |
+|---|---:|
+| Dense retrieval Recall@5 | 91.67% |
+| Hybrid retrieval Recall@5 | 100.00% |
+| Conversational rewriting | 5/5 |
+| LLM-judge faithfulness score | 10/10 |
+| LLM-judge hallucination-safety score | 10/10 |
+
+The hybrid retrieval result represents an improvement of **8.33 percentage points** over the recorded dense-search baseline.
+
+LLM-judge scores are evaluation-specific scores, not independently verified accuracy percentages.
+
+### End-to-End Test Results
+
+| Test scenario | Recorded outcome |
+|---|---|
+| Authorized finance question | Pass |
+| Unauthorized finance-document access | Pass |
+| Structured HR employee-count query | Pass |
+| Handling unsupported information | Pass |
+| Multi-user session isolation | Pass |
+
+**Recorded result: 5/5 end-to-end checks passed.**
+
+### Evaluation Scope and Limitations
+
+These results do not establish universal retrieval accuracy, zero hallucinations, or production-grade security. For reproducibility, the evaluation should document the number of test questions, expected source documents, scoring criteria, model configuration, and the exact commands used to run each test.
+
+## 🧩 Engineering Challenges
+
+| Challenge | Approach |
+|---|---|
+| Exact reporting periods missed by semantic retrieval | Combine dense search with BM25 and RRF |
+| Unreliable calculations from CSV context | Route supported numerical queries to Pandas |
+| Irrelevant departmental context | Apply department-aware filtering and result deduplication |
+| Incomplete follow-up questions | Rewrite queries using conversational context |
+| Cross-session context risks | Maintain session-specific conversation state and test isolation |
+
+## 📁 Repository Structure
+
+```text
+FinSight-AI/
+├── app/
+│   ├── api.py
+│   ├── access_control.py
+│   ├── config.py
+│   ├── conversation_store.py
+│   ├── frontend_client.py
+│   ├── generator.py
+│   ├── ingestion.py
+│   ├── rag.py
+│   ├── retriever.py
+│   └── streamlit_app.py
+├── data/
+│   ├── engineering/
+│   ├── finance/
+│   ├── general/
+│   ├── hr/
+│   └── marketing/
+├── diagrams/
+├── evaluation/
+│   └── rag_evaluation.ipynb
+├── tests/
+├── requirements.txt
+├── .env.example
+├── .gitignore
+├── LICENSE
+└── README.md
+```
+
+This is the intended layout. Ensure the listed files exist before publishing the README; `.env.example` and `LICENSE` should only be listed once created.
+
+## 🚀 Getting Started
+
+### Prerequisites
 
 - Python 3.10 or newer
-- A Groq API key for LLM responses
-- Internet access on the first ingestion run to download the embedding model
+- A Groq API key
+- Internet access for the initial embedding-model download
 
-## Setup
+### 1. Clone the Repository
 
-From the repository root, create and activate a virtual environment, then install dependencies:
+Replace the example URL with your actual repository URL.
+
+```bash
+git clone https://github.com/YOUR_USERNAME/FinSight-AI.git
+cd FinSight-AI
+```
+
+### 2. Create and Activate a Virtual Environment
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate       # Windows PowerShell: .venv\Scripts\Activate.ps1
+```
+
+Linux or macOS:
+
+```bash
+source .venv/bin/activate
+```
+
+Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+### 3. Install Dependencies
+
+```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Create a `.env` file in the repository root and add your Groq key:
+### 4. Configure Environment Variables
+
+Create a `.env` file in the project root:
 
 ```dotenv
 GROQ_API_KEY=your_groq_api_key
-# Optional; defaults to http://127.0.0.1:8000
 FINSOLVE_API_URL=http://127.0.0.1:8000
 ```
 
-Keep `.env` private; it is ignored by Git. Never commit API keys or real employee data.
+Add any additional variables required by the application's configuration, including demo authentication settings if applicable.
 
-## Build the local search index
+Never commit `.env` files, API keys, access tokens, or real employee information.
 
-The Chroma database is generated locally and is not stored in Git. Build it from the files under `data/`:
+### 5. Build the Search Index
+
+From the repository root, run:
 
 ```bash
 python app/ingestion.py
 ```
 
-This creates `chroma_db/`. Run ingestion again after changing the source documents.
+This builds the local ChromaDB index from the supported source documents. Run ingestion again when indexed documents change.
 
-## Run the application
+### 6. Start the Backend
 
-Start the API in one terminal:
-
-```bash
-uvicorn api:app --app-dir app --reload
-```
-
-Start the Streamlit interface in a second terminal:
+Open the first terminal:
 
 ```bash
-streamlit run app/streamlit_app.py
+python -m uvicorn api:app --app-dir app --reload --port 8000
 ```
 
-Open the local URL printed by Streamlit (usually <http://localhost:8501>). The interface calls the API at `http://127.0.0.1:8000` by default; set `FINSOLVE_API_URL` in `.env` if your API runs elsewhere.
+Available endpoints:
 
-The API health endpoint is available at <http://127.0.0.1:8000/health>, and FastAPI's interactive API documentation is at <http://127.0.0.1:8000/docs>.
+- API documentation: http://127.0.0.1:8000/docs
+- Health check: http://127.0.0.1:8000/health
 
-## Run the tests
+### 7. Start the Frontend
+
+Open a second terminal, activate the virtual environment, and run:
 
 ```bash
-PYTHONPATH=app python -m unittest discover -s tests
+python -m streamlit run app/streamlit_app.py --server.port 8501
 ```
 
-## Notes
+Open the application at:
 
-- The first model download and index build can take a while.
-- `chroma_db/`, `.env`, virtual environments, and local tool configuration are intentionally excluded from Git.
-- This repository demonstrates a RAG workflow; review the authentication, data handling, and deployment setup before any production use.
+http://localhost:8501
+
+### 8. Run Automated Tests
+
+From the repository root:
+
+```bash
+PYTHONPATH=app python -m unittest discover -s tests -v
+```
+
+Use the evaluation notebook to inspect retrieval results, compare expected documents with retrieved candidates, and investigate failures.
+
+## 🔭 Future Improvements
+
+- Expand the evaluation dataset and add automated regression testing.
+- Benchmark a reranker against the current hybrid retrieval pipeline.
+- Strengthen authentication, authorization, and audit logging.
+- Improve observability with latency, error, and retrieval-quality metrics.
+- Add continuous integration for tests and code quality.
+- Prepare reproducible containerized deployment.
+- Document model configuration, resource usage, and known limitations.
+
+## 📄 License
+
+Add a `LICENSE` file containing the selected license terms before claiming that the project is released under that license.
+
+---
+
+<div align="center">
+
+**FinSight AI**
+
+*Enterprise Knowledge Retrieval · Hybrid Search · Grounded Generation*
+
+</div>
