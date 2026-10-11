@@ -52,15 +52,43 @@ FinSight AI addresses these challenges through a modular RAG pipeline with dense
 | Conversation management | Session-based context handling |
 | Quality assurance | Retrieval evaluation and automated tests |
 
+## ✅ Features in Simple Words
+
+1. **Company employees can sign in:** the email must use `@fintechco.com` and be listed in the employee CSV.
+2. **Department is checked from the CSV:** the app reads the employee's email and department from `data/hr/hr_data.csv`. It allows General, Finance, HR, Marketing, and Engineering/Technology departments.
+3. **Department-based answers:** employees can ask about documents their department is allowed to see. Requests for restricted information are denied.
+4. **Multiple chats:** start more than one chat, switch between them in Chat History, and continue each chat during the current browser session. A chat gets a suggested name from its first question.
+5. **Multiple notes:** create, edit, and switch between notes. Note names stay separate from chat names. Chat and note data currently lasts for the current browser session.
+6. **Download notes:** download the selected note as a `.txt` file.
+7. **Access and answer analytics:** see the allowed document scope, response time, detected question type, and sources used.
+8. **Denied-request count:** the analytics counter increases when the server denies a restricted chat request. It is a current-session count, not a permanent audit log.
+9. **Answers from company files:** the assistant searches company documents and shows the sources used for its answer when available.
+10. **Follow-up questions:** each chat can use its earlier messages to understand follow-up questions.
+
+> **Demo login:** the app uses a shared demo-only password. Do not use this setup for real employee accounts or confidential data.
+
 ## 🖥️ Application Preview
 
-Add a screenshot of the running frontend here. Save the screenshot in your repository as `assets/finsight-ai-demo.png`.
+The screenshots below show the sign-in page, home screen, chat, and analytics. Employee email addresses have been replaced with example addresses.
 
-Replace this placeholder with the following Markdown once the screenshot exists:
-
-`![FinSight AI application showing a user question, grounded response, and retrieved sources](assets/finsight-ai-demo.png)`
-
-The screenshot should show the actual interface and a representative question-answer interaction.
+<table>
+  <tr>
+    <td><img src="assets/screenshots/login.png" alt="FinSolve employee sign-in page" width="100%"></td>
+    <td><img src="assets/screenshots/home.png" alt="FinSolve workspace home page" width="100%"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Employee sign-in</strong></td>
+    <td align="center"><strong>Workspace home</strong></td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshots/chat.png" alt="FinSolve chat page with department-specific suggested questions" width="100%"></td>
+    <td><img src="assets/screenshots/analytics.png" alt="FinSolve session analytics page" width="100%"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Knowledge chat</strong></td>
+    <td align="center"><strong>Session analytics</strong></td>
+  </tr>
+</table>
 
 ## 🏗️ System Architecture
 
@@ -240,7 +268,7 @@ These results do not establish universal retrieval accuracy, zero hallucinations
 
 ```text
 FinSight-AI/
-├── app/
+├── app/                         # Backend and RAG runtime
 │   ├── api.py
 │   ├── access_control.py
 │   ├── config.py
@@ -250,7 +278,6 @@ FinSight-AI/
 │   ├── ingestion.py
 │   ├── rag.py
 │   ├── retriever.py
-│   └── streamlit_app.py
 ├── frontend/
 │   ├── app.js
 │   ├── index.html
@@ -262,17 +289,22 @@ FinSight-AI/
 │   ├── hr/
 │   └── marketing/
 ├── diagrams/
+├── assets/
+│   └── screenshots/
+│       ├── analytics.png
+│       ├── chat.png
+│       ├── home.png
+│       └── login.png
 ├── evaluation/
 │   └── rag_evaluation.ipynb
 ├── tests/
 ├── requirements.txt
-├── .env.example
 ├── .gitignore
 ├── LICENSE
 └── README.md
 ```
 
-This is the intended layout. Ensure the listed files exist before publishing the README; `.env.example` and `LICENSE` should only be listed once created.
+This tree highlights the files used by the FastAPI service and browser frontend. The repository also includes supporting data, diagrams, and tests.
 
 ## 🚀 Getting Started
 
@@ -284,11 +316,9 @@ This is the intended layout. Ensure the listed files exist before publishing the
 
 ### 1. Clone the Repository
 
-Replace the example URL with your actual repository URL.
-
 ```bash
-git clone https://github.com/YOUR_USERNAME/FinSight-AI.git
-cd FinSight-AI
+git clone https://github.com/Namratapatel9027/finsight-ai.git
+cd finsight-ai
 ```
 
 ### 2. Create and Activate a Virtual Environment
@@ -313,7 +343,7 @@ Windows PowerShell:
 
 ```bash
 python -m pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ### 4. Configure Environment Variables
@@ -374,7 +404,7 @@ Use the evaluation notebook to inspect retrieval results, compare expected docum
 
 ## 📄 License
 
-Add a `LICENSE` file containing the selected license terms before claiming that the project is released under that license.
+See the [`LICENSE`](LICENSE) file for the project's license terms.
 
 ---
 
